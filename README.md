@@ -11,12 +11,16 @@ using Hotkeys;
 using System.Windows;
 using System.Windows.Input;
 
+//...
+
 Hotkey key = new(
     Key.S,
     this,
     (ModifierKeys.Control | ModifierKeys.Alt),
     "Heavy Duty Save Hotkey",
     hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
+
+//...
 
 key.Dispose();
 ```
