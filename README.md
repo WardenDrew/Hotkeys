@@ -3,7 +3,7 @@ A small .NET Library for Global Hotkey binding. Updated to .NET 6.0
 
 # Usage
 
-See the `Hotkeys.Example` project for a more complicated example demonstrating the `HotkeyService` and how to handle some edge cases that windows throws at you.
+See the `Hotkeys.Example` project for a more complicated example demonstrating the `HotkeyService` and how to handle some edge cases that come up when implementing a KeyDown listener to let a user choose their own hotkeys.
 
 Simple Example
 ```cs
