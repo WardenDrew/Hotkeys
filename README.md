@@ -1,5 +1,5 @@
 # Hotkeys2
-A small .NET Library for Global Hotkey binding. Built upon @mrousavy's original .NET Framework library [Hotkeys](https://github.com/mrousavy/Hotkeys) and reimagined for .NET 6
+A small .NET Library for Global Hotkey binding. Built upon [@mrousavy](https://github.com/mrousavy)'s original .NET Framework library [Hotkeys](https://github.com/mrousavy/Hotkeys) and reimagined for .NET 6
 
 ## Usage
 
