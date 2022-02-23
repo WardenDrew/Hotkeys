@@ -14,11 +14,11 @@ using System.Windows.Input;
 //...
 
 Hotkey key = new(
-    Key.S,
-    this,
-    (ModifierKeys.Control | ModifierKeys.Alt),
-    "Heavy Duty Save Hotkey",
-    hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
+    key: Key.S,
+    window: this,
+    modifiers: (ModifierKeys.Control | ModifierKeys.Alt),
+    description: "Heavy Duty Save Hotkey",
+    action: hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
 
 //...
 
