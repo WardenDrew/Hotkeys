@@ -1,7 +1,7 @@
-# Hotkeys
-A small .NET Library for Global Hotkey binding. Updated to .NET 6.0
+# Hotkeys2
+A small .NET Library for Global Hotkey binding. Built upon @mrousavy's original .NET Framework library [Hotkeys](https://github.com/mrousavy/Hotkeys) and reimagined for .NET 6
 
-# Usage
+## Usage
 
 See the `Hotkeys.Example` project for a more complicated example demonstrating the `HotkeyService` and how to handle some edge cases that come up when implementing a KeyDown listener to let a user choose their own hotkeys.
 
