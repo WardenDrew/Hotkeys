@@ -5,17 +5,16 @@ A small .NET Library for Global Hotkey binding. Updated to .NET 6.0
 
 Example _(C#, in a WPF Application)_:
 ```cs
-using mrousavy;
-// ...
-var key = new HotKey(
-    (ModifierKeys.Control | ModifierKeys.Alt), 
-    Key.S, 
-    this, 
-    (hotkey) => {
-        MessageBox.Show("Ctrl + Alt + S was pressed!");
-    }
-);
-// ...
+using Hotkeys;
+using System.Windows;
+using System.Windows.Input;
+
+Hotkey key = new(
+    (ModifierKeys.Control | ModifierKeys.Alt),
+    Key.S,
+    this,
+    (hotkey) => MessageBox.Show("Ctrl + Alt + S was pressed!"));
+
 key.Dispose();
 ```
 
