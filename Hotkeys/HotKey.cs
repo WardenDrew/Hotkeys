@@ -5,108 +5,125 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 
-namespace mrousavy {
-    public sealed class HotKey : IDisposable {
-        private readonly IntPtr _handle;
+namespace Hotkeys
+{
+	public sealed class Hotkey : IDisposable
+	{
+		public const int WM_HOTKEY = 0x0312;
 
-        private readonly int _id;
+		private readonly IntPtr _handle;
+		private readonly int _id;
 
-        private bool _isKeyRegistered;
+		private bool _isKeyRegistered;
+		private Dispatcher _currentDispatcher;
 
-        private Dispatcher _currentDispatcher;
+		private int InteropKey => KeyInterop.VirtualKeyFromKey(Key);
 
-        [DllImport("user32.dll")]
-        static extern IntPtr GetForegroundWindow();
+		public event Action<Hotkey> HotkeyPressed;
 
-        public HotKey(ModifierKeys modifierKeys, Key key, Window window)
-            : this(modifierKeys, key, new WindowInteropHelper(window), null) {
-        }
+		public Key Key { get; private set; }
+		public ModifierKeys KeyModifier { get; private set; }
 
-        public HotKey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window)
-            : this(modifierKeys, key, window.Handle, null) {
-        }
+		[DllImport("user32.dll", SetLastError = true, EntryPoint = "RegisterHotKey")]
+		public static extern bool WinAPIRegisterHotkey(IntPtr hWnd, int id, ModifierKeys fsModifiers, int vk);
 
-        public HotKey(ModifierKeys modifierKeys, Key key, Window window, Action<HotKey> onKeyAction)
-            : this(modifierKeys, key, new WindowInteropHelper(window), onKeyAction) {
-        }
+		[DllImport("user32.dll", SetLastError = true, EntryPoint = "UnregisterHotKey")]
+		public static extern bool WinAPIUnregisterHotkey(IntPtr hWnd, int id);
 
-        public HotKey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window, Action<HotKey> onKeyAction)
-            : this(modifierKeys, key, window.Handle, onKeyAction) {
-        }
+		[DllImport("user32.dll", EntryPoint = "GetForegroundWindow")]
+		static extern IntPtr WinAPIGetForegroundWindow();
 
-        public HotKey(ModifierKeys modifierKeys, Key key, IntPtr windowHandle, Action<HotKey> onKeyAction = null) {
-            Key = key;
-            KeyModifier = modifierKeys;
-            _id = GetHashCode();
-            _handle = windowHandle == IntPtr.Zero ? GetForegroundWindow() : windowHandle;
-            _currentDispatcher = Dispatcher.CurrentDispatcher;
-            RegisterHotKey();
-            ComponentDispatcher.ThreadPreprocessMessage += ThreadPreprocessMessageMethod;
+		public Hotkey(ModifierKeys modifierKeys, Key key, Window window)
+			: this(modifierKeys, key, new WindowInteropHelper(window), null) { }
 
-            if(onKeyAction != null)
-                HotKeyPressed += onKeyAction;
-        }
+		public Hotkey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window)
+			: this(modifierKeys, key, window.Handle, null) { }
 
-        ~HotKey() {
-            Dispose();
-        }
+		public Hotkey(ModifierKeys modifierKeys, Key key, Window window, Action<Hotkey> onKeyAction)
+			: this(modifierKeys, key, new WindowInteropHelper(window), onKeyAction) { }
 
-        public event Action<HotKey> HotKeyPressed;
+		public Hotkey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window, Action<Hotkey> onKeyAction)
+			: this(modifierKeys, key, window.Handle, onKeyAction) { }
 
-        public Key Key { get; private set; }
+		public Hotkey(ModifierKeys modifierKeys, Key key, IntPtr windowHandle, Action<Hotkey> onKeyAction = null)
+		{
+			Key = key;
+			KeyModifier = modifierKeys;
+			_id = GetHashCode();
+			_handle = windowHandle == IntPtr.Zero ? WinAPIGetForegroundWindow() : windowHandle;
+			_currentDispatcher = Dispatcher.CurrentDispatcher;
+			RegisterHotkey();
+			ComponentDispatcher.ThreadPreprocessMessage += ThreadPreprocessMessageMethod;
 
-        public ModifierKeys KeyModifier { get; private set; }
+			if (onKeyAction != null)
+				HotkeyPressed += onKeyAction;
+		}
 
-        private int InteropKey => KeyInterop.VirtualKeyFromKey(Key);
+		~Hotkey()
+		{
+			Dispose();
+		}
 
-        public void Dispose() {
-            try {
-                ComponentDispatcher.ThreadPreprocessMessage -= ThreadPreprocessMessageMethod;
-            } catch(Exception) {
-                // ignored
-            } finally {
-                UnregisterHotKey();
-            }
-        }
+		public void Dispose()
+		{
+			try
+			{
+				ComponentDispatcher.ThreadPreprocessMessage -= ThreadPreprocessMessageMethod;
+			}
+			finally
+			{
+				UnregisterHotkey();
+			}
+		}
 
-        private void OnHotKeyPressed() {
-            _currentDispatcher.Invoke(
-                delegate {
-                    HotKeyPressed?.Invoke(this);
-                });
-        }
+		private void OnHotkeyPressed()
+		{
+			_currentDispatcher.Invoke(
+				delegate
+				{
+					HotkeyPressed?.Invoke(this);
+				});
+		}
 
-        private void RegisterHotKey() {
-            if(Key == Key.None) {
-                return;
-            }
+		private void RegisterHotkey()
+		{
+			if (Key == Key.None)
+			{
+				return;
+			}
 
-            if(_isKeyRegistered) {
-                UnregisterHotKey();
-            }
+			if (_isKeyRegistered)
+			{
+				UnregisterHotkey();
+			}
 
-            _isKeyRegistered = HotKeyWinApi.RegisterHotKey(_handle, _id, KeyModifier, InteropKey);
+			_isKeyRegistered = WinAPIRegisterHotkey(_handle, _id, KeyModifier, InteropKey);
 
-            if(!_isKeyRegistered) {
-                throw new ApplicationException("An unexpected Error occured! (Hotkey may already be in use)");
-            }
-        }
+			if (!_isKeyRegistered)
+			{
+				throw new ApplicationException("An unexpected Error occured! (Hotkey may already be in use)");
+			}
+		}
 
-        private void ThreadPreprocessMessageMethod(ref MSG msg, ref bool handled) {
-            if(handled) {
-                return;
-            }
+		private void ThreadPreprocessMessageMethod(ref MSG msg, ref bool handled)
+		{
+			if (handled)
+			{
+				return;
+			}
 
-            if(msg.message != HotKeyWinApi.WmHotKey || (int)(msg.wParam) != _id) {
-                return;
-            }
+			if (msg.message != WM_HOTKEY || (int)(msg.wParam) != _id)
+			{
+				return;
+			}
 
-            OnHotKeyPressed();
-            handled = true;
-        }
+			OnHotkeyPressed();
+			handled = true;
+		}
 
-        private void UnregisterHotKey() {
-            _isKeyRegistered = !HotKeyWinApi.UnregisterHotKey(_handle, _id);
-        }
-    }
+		private void UnregisterHotkey()
+		{
+			_isKeyRegistered = !WinAPIUnregisterHotkey(_handle, _id);
+		}
+	}
 }

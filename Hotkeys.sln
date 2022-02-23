@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hotkeys", "Hotkeys\Hotkeys.csproj", "{EDC8BE17-922A-4904-A446-619346C604E4}"
 EndProject
@@ -15,8 +15,15 @@ Global
 		{EDC8BE17-922A-4904-A446-619346C604E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDC8BE17-922A-4904-A446-619346C604E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EDC8BE17-922A-4904-A446-619346C604E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80429EA8-9EBB-4318-91F9-990508CCB8A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80429EA8-9EBB-4318-91F9-990508CCB8A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80429EA8-9EBB-4318-91F9-990508CCB8A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80429EA8-9EBB-4318-91F9-990508CCB8A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EB5811EB-B37A-46A1-96F8-5E85B343195F}
 	EndGlobalSection
 EndGlobal
