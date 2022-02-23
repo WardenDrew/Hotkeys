@@ -52,6 +52,11 @@ namespace Hotkeys
 		public ModifierKeys Modifiers { get; private set; }
 
 		/// <summary>
+		/// If the key is currently registered or not
+		/// </summary>
+		public bool IsKeyRegistered { get { return _isKeyRegistered; } }
+
+		/// <summary>
 		/// Friendly name for the combo
 		/// </summary>
 		public string Name
@@ -170,7 +175,7 @@ namespace Hotkeys
 				});
 		}
 
-		private void RegisterHotkey()
+		public void RegisterHotkey()
 		{
 			if (Key == Key.None ||
 				Key == Key.System)
@@ -212,7 +217,7 @@ namespace Hotkeys
 			handled = true;
 		}
 
-		private void UnregisterHotkey()
+		public void UnregisterHotkey()
 		{
 			_isKeyRegistered = !WinAPIUnregisterHotkey(_handle, _id);
 		}

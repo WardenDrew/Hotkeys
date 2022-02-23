@@ -25,15 +25,19 @@ namespace Hotkeys.Example
 
 		public MainWindow(IHotkeyService hotkeyService)
 		{
+			// IHotkeyService is loaded via DI, See App.xaml.cs for a basic ServiceProvider setup inside of WPF
 			this.hotkeyService = hotkeyService;
+			
 			InitializeComponent();
 
+			// UI Setup
 			AddHotkeyButton.Click += AddHotkeyButton_Click;
 			HotkeysListBox.ItemsSource = hotkeyService.Hotkeys;
 			HotkeysListBox.DisplayMemberPath = "Name";
 			HotkeysListBox.MouseDoubleClick += HotkeysListBox_MouseDoubleClick;
 		}
 
+		// Routine to remove hotkeys when they are double clicked on in the list
 		private void HotkeysListBox_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			if (HotkeysListBox.SelectedItem is Hotkey hotkey)
@@ -53,63 +57,60 @@ namespace Hotkeys.Example
 			}
 		}
 
+		// Start listening for key setup
 		private void AddHotkeyButton_Click(object sender, RoutedEventArgs e)
 		{
+			// Unregisters all registered hotkeys but does not dispose them
+			hotkeyService.Suspend();
+			
 			AddHotkeyButton.IsEnabled = false;
 			AddHotkeyButton.Content = "Listening. Press ESC to cancel";
 
 			this.KeyDown += MainWindow_KeyDown;
-			this.KeyUp += MainWindow_KeyUp;
 		}
 
-		private void MainWindow_KeyUp(object sender, KeyEventArgs e)
+		// Process Key Events
+		private void MainWindow_KeyDown(object sender, KeyEventArgs e)
 		{
 			try
 			{
+				// Stop bubbling event
 				e.Handled = true;
 
-				EndIntercept();
-
-				Hotkey? newHotkey = null;
-
+				// Store the keycode here
 				Key key = e.Key;
 
+				// Escape pressed. Stop listening for key setup
+				if (key == Key.Escape)
+				{
+					EndIntercept(); 
+					return;
+				}
+
+				// If ALT is pressed as a modifier, e.Key becomes Key.System and the "real" key is put in e.SystemKey instead
 				if (key == Key.System)
 				{
 					key = e.SystemKey;
 				}
 
-				if (!key.IsModifier())
+				// If this key is directly a modifier, then we can't store it due to WinAPI limitations with RegisterHotKey.
+				// A low level keyboard hook can get around this but that is more invasive than we want to be 99% of the time
+				if (key.IsModifier())
 				{
-					newHotkey = hotkeyService.Add(key, this, modifiers: Keyboard.Modifiers, action: hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
-				}
-				else
-				{
-					ModifierKeys modifiers = Keyboard.Modifiers;
-
-					/*if (key == Key.LeftCtrl || key == Key.RightCtrl)
-					{
-						modifiers = (modifiers & ~ModifierKeys.Control);
-					}
-
-					if (key == Key.LeftAlt || key == Key.RightAlt)
-					{
-						modifiers = (modifiers & ~ModifierKeys.Alt);
-					}
-
-					if (key == Key.LeftShift || key == Key.RightShift)
-					{
-						modifiers = (modifiers & ~ModifierKeys.Shift);
-					}
-
-					if (key == Key.LWin || key == Key.RWin)
-					{
-						modifiers = (modifiers & ~ModifierKeys.Windows);
-					}*/
-
-					newHotkey = hotkeyService.Add(key, this, modifiers: modifiers, action: hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
+					return;
 				}
 
+				// Setting up a new key. Stop listening for key setup
+				EndIntercept();
+
+				// Registers the hotkey and returns a reference
+				Hotkey newHotkey = hotkeyService.Add(
+					key: key, 
+					window: this, 
+					modifiers: Keyboard.Modifiers, 
+					action: hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
+
+				// UI update
 				HeardHotkeyLabel.Content = $"Added: {newHotkey.Name}";
 				HotkeysListBox.Items.Refresh();
 			}
@@ -119,46 +120,15 @@ namespace Hotkeys.Example
 			}
 		}
 
-		private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-		{
-			try
-			{
-				e.Handled = true;
-
-				Key key = e.Key;
-
-				if (key == Key.Escape)
-				{
-					EndIntercept();
-					return;
-				}
-
-				if (key == Key.System)
-				{
-					key = e.SystemKey;
-				}
-
-				if (!key.IsModifier())
-				{
-					EndIntercept();
-					Hotkey newHotkey = hotkeyService.Add(key, this, modifiers: Keyboard.Modifiers, action: hotkey => MessageBox.Show($"{hotkey.Name} was pressed!"));
-					HeardHotkeyLabel.Content = $"Added: {newHotkey.Name}";
-					HotkeysListBox.Items.Refresh();
-					return;
-				}
-			}
-			catch (Exception ex)
-			{
-				MessageBox.Show(ex.Message);
-			}
-		}
-
+		// Stop listening for key setup
 		private void EndIntercept()
 		{
+			// registers all unregistered hotkeys being tracked
+			hotkeyService.Resume();
+
 			AddHotkeyButton.IsEnabled = true;
 			AddHotkeyButton.Content = "Add Hotkey";
 			this.KeyDown -= MainWindow_KeyDown;
-			this.KeyUp -= MainWindow_KeyUp;
 		}
 	}
 }

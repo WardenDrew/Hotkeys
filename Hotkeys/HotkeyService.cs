@@ -86,6 +86,16 @@ namespace Hotkeys
 			Key key, 
 			ModifierKeys modifiers = ModifierKeys.None, 
 			bool failSilently = false);
+
+		/// <summary>
+		/// Suspend all hotkeys we currently have
+		/// </summary>
+		public void Suspend();
+
+		/// <summary>
+		/// Resume all hotkeys we currently have
+		/// </summary>
+		public void Resume();
 	}
 
 	/// <summary>
@@ -231,6 +241,22 @@ namespace Hotkeys
 		{
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
+		}
+
+		public void Suspend()
+		{
+			hotkeys
+				.Where(x => x.IsKeyRegistered)
+				.ToList()
+				.ForEach(x => x.UnregisterHotkey());
+		}
+
+		public void Resume()
+		{
+			hotkeys
+				.Where(x => !x.IsKeyRegistered)
+				.ToList()
+				.ForEach(x => x.RegisterHotkey());
 		}
 	}
 }
