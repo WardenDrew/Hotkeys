@@ -7,9 +7,12 @@ using System.Windows.Threading;
 
 namespace Hotkeys
 {
+	/// <summary>
+	/// Represents a Global Hotkey. Hotkey is active for the lifetime of the object and is removed when the object is disposed.
+	/// </summary>
 	public sealed class Hotkey : IDisposable
 	{
-		public const int WM_HOTKEY = 0x0312;
+		private const int WM_HOTKEY = 0x0312;
 
 		private readonly IntPtr _handle;
 		private readonly int _id;
@@ -19,44 +22,73 @@ namespace Hotkeys
 
 		private int InteropKey => KeyInterop.VirtualKeyFromKey(Key);
 
-		public event Action<Hotkey> HotkeyPressed;
-
-		public Key Key { get; private set; }
-		public ModifierKeys KeyModifier { get; private set; }
-
 		[DllImport("user32.dll", SetLastError = true, EntryPoint = "RegisterHotKey")]
-		public static extern bool WinAPIRegisterHotkey(IntPtr hWnd, int id, ModifierKeys fsModifiers, int vk);
+		private static extern bool WinAPIRegisterHotkey(IntPtr hWnd, int id, ModifierKeys fsModifiers, int vk);
 
 		[DllImport("user32.dll", SetLastError = true, EntryPoint = "UnregisterHotKey")]
-		public static extern bool WinAPIUnregisterHotkey(IntPtr hWnd, int id);
+		private static extern bool WinAPIUnregisterHotkey(IntPtr hWnd, int id);
 
 		[DllImport("user32.dll", EntryPoint = "GetForegroundWindow")]
-		static extern IntPtr WinAPIGetForegroundWindow();
+		private static extern IntPtr WinAPIGetForegroundWindow();
 
-		public Hotkey(ModifierKeys modifierKeys, Key key, Window window)
-			: this(modifierKeys, key, new WindowInteropHelper(window), null) { }
 
-		public Hotkey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window)
-			: this(modifierKeys, key, window.Handle, null) { }
+		/// <summary>
+		/// Event that fires when the hotkey is pressed
+		/// </summary>
+		public event Action<Hotkey> HotkeyPressed;
 
-		public Hotkey(ModifierKeys modifierKeys, Key key, Window window, Action<Hotkey> onKeyAction)
-			: this(modifierKeys, key, new WindowInteropHelper(window), onKeyAction) { }
+		/// <summary>
+		/// Key that is being watched
+		/// </summary>
+		public Key Key { get; private set; }
 
-		public Hotkey(ModifierKeys modifierKeys, Key key, WindowInteropHelper window, Action<Hotkey> onKeyAction)
-			: this(modifierKeys, key, window.Handle, onKeyAction) { }
+		/// <summary>
+		/// Modifiers required for the hotkey to fire
+		/// </summary>
+		public ModifierKeys KeyModifier { get; private set; }
 
-		public Hotkey(ModifierKeys modifierKeys, Key key, IntPtr windowHandle, Action<Hotkey> onKeyAction = null)
+		/// <summary>
+		/// Register a Hotkey
+		/// </summary>
+		/// <param name="modifiers">Modifier key bit flags</param>
+		/// <param name="key">The Key</param>
+		/// <param name="window">The window events are dispatched on</param>
+		/// <param name="action">Action to take when hotkey occurs</param>
+		/// <exception cref="RegisterHotkeyException">Occurs if the hotkey cannot be registered</exception>
+		public Hotkey(ModifierKeys modifiers, Key key, Window window, Action<Hotkey> action = null)
+			: this(modifiers, key, new WindowInteropHelper(window), action) { }
+
+		/// <summary>
+		/// Register a Hotkey
+		/// </summary>
+		/// <param name="modifiers">Modifier key bit flags</param>
+		/// <param name="key">The Key</param>
+		/// <param name="window">The window events are dispatched on</param>
+		/// <param name="action">Action to take when hotkey occurs</param>
+		/// <exception cref="RegisterHotkeyException">Occurs if the hotkey cannot be registered</exception>
+		public Hotkey(ModifierKeys modifiers, Key key, WindowInteropHelper window, Action<Hotkey> action = null)
+			: this(modifiers, key, window.Handle, action) { }
+
+		/// <summary>
+		/// Register a Hotkey
+		/// </summary>
+		/// <param name="modifiers">Modifier key bit flags</param>
+		/// <param name="key">The Key</param>
+		/// <param name="window">The window events are dispatched on</param>
+		/// <param name="action">Action to take when hotkey occurs</param>
+		/// <exception cref="RegisterHotkeyException">Occurs if the hotkey cannot be registered</exception>
+		public Hotkey(ModifierKeys modifiers, Key key, IntPtr windowHandle, Action<Hotkey> action = null)
 		{
 			Key = key;
-			KeyModifier = modifierKeys;
+			KeyModifier = modifiers;
 			_id = GetHashCode();
 			_handle = windowHandle == IntPtr.Zero ? WinAPIGetForegroundWindow() : windowHandle;
 			_currentDispatcher = Dispatcher.CurrentDispatcher;
 			RegisterHotkey();
 			ComponentDispatcher.ThreadPreprocessMessage += ThreadPreprocessMessageMethod;
 
-			if (onKeyAction != null)
-				HotkeyPressed += onKeyAction;
+			if (action != null)
+				HotkeyPressed += action;
 		}
 
 		~Hotkey()
@@ -64,6 +96,7 @@ namespace Hotkeys
 			Dispose();
 		}
 
+		/// <inheritdoc/>
 		public void Dispose()
 		{
 			try
@@ -101,7 +134,7 @@ namespace Hotkeys
 
 			if (!_isKeyRegistered)
 			{
-				throw new ApplicationException("An unexpected Error occured! (Hotkey may already be in use)");
+				throw new RegisterHotkeyException("Failed to register the hotkey, it may already be in use!");
 			}
 		}
 
