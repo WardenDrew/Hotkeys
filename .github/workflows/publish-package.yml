@@ -1,0 +1,25 @@
+name: publish-package
+
+on: workflow_dispatch
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 6.0.x
+    - name: Setup Github Source
+      run: dotnet nuget add source --username WardenDrew --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/WardenDrew/index.json"
+    - name: Restore dependencies
+      run: dotnet restore
+    - name: Build
+      run: dotnet build --no-restore
+    - name: Test
+      run: dotnet pack Hotkeys/Hotkeys.csproj -c Release
+    - name: Upload Package
+      run: dotnet nuget push "Hotkeys/bin/Release/Hotkeys.2.0.0.nupkg" --source "github"
