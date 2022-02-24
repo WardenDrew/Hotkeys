@@ -16,7 +16,7 @@ jobs:
     - name: Setup Github Source
       run: dotnet nuget add source --username WardenDrew --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/WardenDrew/index.json"
     - name: Build
-      run: dotnet build Hotkeys/HOtkeys.csproj -c Release
+      run: dotnet build Hotkeys/Hotkeys.csproj -c Release
     - name: Pack for publish
       run: dotnet pack Hotkeys/Hotkeys.csproj -c Release --no-build
     - name: Upload Package
