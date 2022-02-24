@@ -20,4 +20,4 @@ jobs:
     - name: Pack for publish
       run: dotnet pack Hotkeys/Hotkeys.csproj -c Release --no-build
     - name: Upload Package
-      run: dotnet nuget push "Hotkeys/bin/Release/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github"
+      run: dotnet nuget push "**/*.nupkg" --api-key ${{ secrets.GITHUB_TOKEN }} --source "github"
